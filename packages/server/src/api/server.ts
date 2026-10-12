@@ -99,7 +99,7 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
     if (scope === 'public') return;
     const principal = opts.auth.resolve(tokenFromRequest(req));
     if (!principal) throw new ApiError(401, 'Nicht angemeldet: Token fehlt oder ist ungültig');
-    if (!hasScope(principal, scope)) throw new ApiError(403, `Berechtigung "${scope}" erforderlich`);
+    if (scope !== 'any' && !hasScope(principal, scope)) throw new ApiError(403, `Berechtigung "${scope}" erforderlich`);
     req.principal = principal;
   });
 

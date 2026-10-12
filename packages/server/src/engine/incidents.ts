@@ -67,7 +67,7 @@ export class IncidentService {
   create(
     alert: Alert,
     now: number,
-    opts: { storm?: boolean; stormCount?: number; related?: CorrelationScore[]; notify?: boolean } = {},
+    opts: { storm?: boolean; stormCount?: number; related?: CorrelationScore[]; notify?: boolean; recurrence?: boolean } = {},
   ): Incident {
     const t = this.t;
     const incident: Incident = {
@@ -115,7 +115,7 @@ export class IncidentService {
       });
     } else {
       this.timeline(incident.id, 'created', t.created(alert.title, alert.source), null, { alertId: alert.id });
-      this.linkRecurrence(incident, now);
+      if (opts.recurrence !== false) this.linkRecurrence(incident, now);
     }
 
     for (const r of (opts.related ?? []).slice(0, 3)) {
@@ -411,7 +411,7 @@ export class IncidentService {
 
     alert.incidentId = null;
     this.ctx.store.updateAlert(alert);
-    const created = this.create(alert, now, { notify: false });
+    const created = this.create(alert, now, { notify: false, recurrence: false });
     this.timeline(created.id, 'alert_detached', this.t.alertDetachedNew(alert.title, old.number), actor, { fromId: old.id });
     this.timeline(old.id, 'alert_detached', this.t.alertDetached(alert.title, created.number), actor, { toId: created.id, alertId: alert.id });
     this.refresh(created, now, { notify: false });

@@ -100,10 +100,11 @@ describe('correlation', () => {
     expect(b.incidentId).not.toBe(a.incidentId);
     expect(t.relay.store.linksFor(b.incidentId!).some((l) => l.kind === 'related')).toBe(true);
     const current = [a, b, c].map((r) => t.relay.store.getAlert(r.alertId!)!.incidentId);
-    expect(new Set(current).size).toBe(1);
-    const incident = t.relay.store.getIncident(current[0]!)!;
+    // Everything ends up in the oldest incident.
+    expect(current).toEqual([a.incidentId, a.incidentId, a.incidentId]);
+    const incident = t.relay.store.getIncident(a.incidentId!)!;
     expect(incident.alertCount).toBe(3);
-    const merged = t.relay.store.getIncident(current[0] === a.incidentId ? b.incidentId! : a.incidentId!)!;
+    const merged = t.relay.store.getIncident(b.incidentId!)!;
     expect(merged.status).toBe('resolved');
     expect(merged.resolvedBy).toMatch(/^merge:/);
     expect(incident.severity).toBe('critical');

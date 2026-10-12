@@ -40,6 +40,8 @@ describe('auth', () => {
     expect(t.relay.store.listEvents({})[0].source).toBe('ci');
     const read = await app.inject({ method: 'GET', url: '/api/v1/incidents', headers: { 'x-openrelay-token': token } });
     expect(read.statusCode).toBe(403);
+    const me = await app.inject({ method: 'GET', url: '/api/v1/me', headers: { 'x-openrelay-token': token } });
+    expect(me.json()).toMatchObject({ name: 'ci', scopes: ['ingest'] });
   });
 });
 

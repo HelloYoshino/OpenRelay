@@ -97,6 +97,23 @@ OPENRELAY_ADMIN_TOKEN=geheim npm start
 
 Für die Entwicklung: `npm run dev` (Server mit Reload) und `npm run dev:web` (Dashboard auf Port 5173 mit Proxy).
 
+### Demo
+
+Spielt ein realistisches Szenario ab (API-Fehlerflut, gestaute Worker-Queue, Postgres-Ausfall als Ursache,
+fehlgeschlagene CI-Workflows, flatterndes VPN) und zeigt das Ergebnis:
+
+```bash
+OPENRELAY_URL=http://localhost:8080 OPENRELAY_TOKEN=<admin-token> node scripts/demo.mjs --setup
+```
+
+```
+175 Ereignisse → 8 Alarme → 6 Vorfälle → 7 Benachrichtigungen bisher
+  #1 [P1] Postgres connection refused 10.0.0.5:5432  (3 Alarme · 161 Ereignisse)
+      Ursache: postgres ist Abhängigkeit von api, worker – vermutlich die Ursache
+  #3 [P2] Workflow „CI“ fehlgeschlagen (deltura/api@main)  (2 Alarme · 2 Ereignisse)
+  …
+```
+
 ## Ereignisse senden
 
 **curl, JSON:**

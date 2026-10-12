@@ -20,7 +20,7 @@ export function registerStatusRoutes(app: FastifyInstance, ctx: AppContext): voi
     return { status: 'ok', version: relay.version, uptimeSeconds: Math.round((Date.now() - ctx.startedAt) / 1000) };
   });
 
-  app.get('/api/v1/me', { config: { scope: 'ingest' } }, async (req) => ({
+  app.get('/api/v1/me', { config: { scope: 'any' } }, async (req) => ({
     name: req.principal!.name,
     scopes: req.principal!.scopes,
     version: relay.version,

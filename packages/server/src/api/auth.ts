@@ -11,7 +11,8 @@ export interface Principal {
   defaultSource: string | null;
 }
 
-export type RequiredScope = ApiScope | 'public';
+/** `any` = every valid token, `public` = no token needed. */
+export type RequiredScope = ApiScope | 'any' | 'public';
 
 const ADMIN_HASH_KEY = 'admin_token_hash';
 

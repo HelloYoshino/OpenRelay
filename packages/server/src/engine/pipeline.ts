@@ -252,19 +252,23 @@ export class Pipeline {
         );
         const best = ranked[0];
         if (best && !best.blocked && best.score >= c.threshold) {
-          const target = this.incidents.attach(byId.get(best.incidentId)!, alert, now, { score: best });
           // The new alert is the upstream cause of several open incidents → they are one problem.
-          if (alert.service && best.signals.some((s) => s.kind === 'topology' && s.upstream)) {
-            for (const other of ranked.slice(1)) {
-              if (other.blocked || other.score < c.threshold) continue;
-              if (!other.signals.some((s) => s.kind === 'topology' && s.upstream)) continue;
-              const incident = this.ctx.store.getIncident(other.incidentId);
+          const isCause = (r: CorrelationScore) =>
+            !r.blocked && r.score >= c.threshold && r.signals.some((s) => s.kind === 'topology' && s.upstream);
+          const explained = alert.service && isCause(best) ? ranked.filter(isCause) : [];
+          if (explained.length >= 2) {
+            // Keep the oldest incident: that is the one people were notified about first.
+            const [first, ...rest] = explained.map((r) => byId.get(r.incidentId)!).sort((a, b) => a.createdAt - b.createdAt);
+            const target = this.incidents.attach(first, alert, now, { score: explained.find((r) => r.incidentId === first.id) });
+            for (const other of rest) {
+              const incident = this.ctx.store.getIncident(other.id);
               if (incident && incident.status !== 'resolved') {
-                this.incidents.merge(incident, this.ctx.store.getIncident(target.id)!, 'auto', now, { cause: alert.service });
+                this.incidents.merge(incident, this.ctx.store.getIncident(target.id)!, 'auto', now, { cause: alert.service! });
               }
             }
+            return this.ctx.store.getIncident(target.id)!;
           }
-          return this.ctx.store.getIncident(target.id)!;
+          return this.incidents.attach(byId.get(best.incidentId)!, alert, now, { score: best });
         }
         related = ranked.filter((r) => !r.blocked && r.score >= c.relatedThreshold);
       }
