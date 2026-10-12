@@ -304,12 +304,17 @@ describe('stats & stream', () => {
   it('reports noise reduction', async () => {
     const ch = t.channel('ops');
     t.route({ channels: [ch] });
-    for (let i = 0; i < 50; i++) await t.relay.ingest({ title: 'Same error', severity: 'high' });
+    t.clock.advance(123_457); // not aligned to a bucket boundary
+    for (let i = 0; i < 50; i++) {
+      await t.relay.ingest({ title: 'Same error', severity: 'high' });
+      t.clock.advance(1_013);
+    }
     await t.tick();
     const stats = (await app.inject({ method: 'GET', url: '/api/v1/stats?hours=1', headers })).json();
     expect(stats.totals).toMatchObject({ events: 50, alerts: 1, incidents: 1, notifications: 1 });
     expect(stats.noiseReduction).toBeCloseTo(0.98);
     expect(stats.eventsSeries.reduce((sum: number, p: { count: number }) => sum + p.count, 0)).toBe(50);
+    expect(stats.notificationsSeries.reduce((sum: number, p: { count: number }) => sum + p.count, 0)).toBe(1);
   });
 
   it('exposes Prometheus metrics', async () => {

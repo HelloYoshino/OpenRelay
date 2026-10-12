@@ -20,5 +20,8 @@
     "start": "npm run start -w @openrelay/server",
     "test": "npm run test -w @openrelay/sdk -w @openrelay/server",
     "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "vite": "^7.3.6"
   }
 }

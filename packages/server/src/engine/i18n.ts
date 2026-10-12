@@ -1,5 +1,21 @@
 import { formatDuration } from '../util/time.js';
 
+const KIND_DE: Record<string, string> = {
+  'incident.opened': 'Neuer Vorfall gemeldet',
+  'incident.reopened': 'Erneutes Auftreten gemeldet',
+  'incident.severity': 'Höherer Schweregrad gemeldet',
+  'incident.escalated': 'Eskalation gemeldet',
+  'incident.resolved': 'Behebung gemeldet',
+};
+
+const KIND_EN: Record<string, string> = {
+  'incident.opened': 'New incident sent',
+  'incident.reopened': 'Recurrence sent',
+  'incident.severity': 'Severity increase sent',
+  'incident.escalated': 'Escalation sent',
+  'incident.resolved': 'Resolution sent',
+};
+
 const de = {
   reason: {
     key: (key: string) => `Gleicher Korrelationsschlüssel „${key}“`,
@@ -38,7 +54,7 @@ const de = {
       `Alarm „${title}“ flattert (${changes} Statuswechsel in ${minutes} min) – Benachrichtigungen werden unterdrückt`,
     flappingCleared: (title: string) => `Alarm „${title}“ hat sich stabilisiert`,
     waitingForStable: () => 'Alle Alarme aufgelöst – warte auf Stabilisierung flatternder Alarme',
-    notified: (channels: string[], kind: string) => `Benachrichtigung (${kind}) an ${channels.join(', ')}`,
+    notified: (channels: string[], kind: string) => `${KIND_DE[kind] ?? 'Benachrichtigung'} → ${channels.join(', ')}`,
     digestQueued: (channels: string[], dueInMs: number) =>
       `Für Zusammenfassung vorgemerkt: ${channels.join(', ')} (in ${formatDuration(dueInMs, 'de')})`,
     suppressedSilence: (comment: string | null) => `Benachrichtigung unterdrückt durch Stummschaltung${comment ? ` „${comment}“` : ''}`,
@@ -143,7 +159,7 @@ const en: Messages = {
     flapping: (title, changes, minutes) => `Alert "${title}" is flapping (${changes} state changes in ${minutes} min) – notifications suppressed`,
     flappingCleared: (title) => `Alert "${title}" has stabilized`,
     waitingForStable: () => 'All alerts resolved – waiting for flapping alerts to stabilize',
-    notified: (channels, kind) => `Notification (${kind}) sent to ${channels.join(', ')}`,
+    notified: (channels, kind) => `${KIND_EN[kind] ?? 'Notification'} → ${channels.join(', ')}`,
     digestQueued: (channels, dueInMs) => `Queued for digest: ${channels.join(', ')} (in ${formatDuration(dueInMs, 'en')})`,
     suppressedSilence: (comment) => `Notification suppressed by silence${comment ? ` "${comment}"` : ''}`,
     suppressedFlapping: () => 'Notification suppressed: alert is flapping',

@@ -367,7 +367,7 @@ export class Store {
 
   eventSeries(since: number, bucketMs: number): Array<{ bucket: number; count: number }> {
     return this.db
-      .all<Row>('SELECT (received_at / ?) AS bucket, COUNT(*) AS c FROM events WHERE received_at >= ? GROUP BY bucket', [
+      .all<Row>('SELECT CAST(received_at / ? AS INTEGER) AS bucket, COUNT(*) AS c FROM events WHERE received_at >= ? GROUP BY bucket', [
         bucketMs,
         since,
       ])
@@ -1076,7 +1076,7 @@ export class Store {
   sentSeries(since: number, bucketMs: number): Array<{ bucket: number; count: number }> {
     return this.db
       .all<Row>(
-        "SELECT (sent_at / ?) AS bucket, COUNT(*) AS c FROM deliveries WHERE status = 'sent' AND sent_at >= ? GROUP BY bucket",
+        "SELECT CAST(sent_at / ? AS INTEGER) AS bucket, COUNT(*) AS c FROM deliveries WHERE status = 'sent' AND sent_at >= ? GROUP BY bucket",
         [bucketMs, since],
       )
       .map((r) => ({ bucket: num(r.bucket), count: num(r.c) }));
