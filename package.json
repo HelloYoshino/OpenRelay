@@ -1,0 +1,24 @@
+{
+  "name": "openrelay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Selbst hostbare Event-Intelligence: Deduplizierung, Korrelation, Eskalation und Benachrichtigung",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/sdk",
+    "packages/server",
+    "packages/web"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "npm run build -w @openrelay/sdk -w @openrelay/server -w @openrelay/web",
+    "dev": "npm run dev -w @openrelay/server",
+    "dev:web": "npm run dev -w @openrelay/web",
+    "start": "npm run start -w @openrelay/server",
+    "test": "npm run test -w @openrelay/sdk -w @openrelay/server",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}
