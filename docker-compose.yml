@@ -1,0 +1,29 @@
+services:
+  openrelay:
+    build: .
+    image: openrelay:latest
+    container_name: openrelay
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Adresse, unter der OpenRelay erreichbar ist (für Links in Benachrichtigungen)
+      OPENRELAY_PUBLIC_URL: ${OPENRELAY_PUBLIC_URL:-http://localhost:8080}
+      # Leer lassen → Token wird beim ersten Start generiert und im Log angezeigt
+      OPENRELAY_ADMIN_TOKEN: ${OPENRELAY_ADMIN_TOKEN:-}
+      # Optional: Webhook-Secret für GitHub (X-Hub-Signature-256)
+      OPENRELAY_GITHUB_SECRET: ${OPENRELAY_GITHUB_SECRET:-}
+      # Secrets für die Konfigurationsdatei (siehe examples/openrelay.yaml)
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      TZ: Europe/Berlin
+    volumes:
+      - openrelay-data:/data
+      # Deklarative Konfiguration (optional):
+      # - ./openrelay.yaml:/data/openrelay.yaml:ro
+      # Eigene Plugins (optional):
+      # - ./plugins:/data/plugins:ro
+
+volumes:
+  openrelay-data:
