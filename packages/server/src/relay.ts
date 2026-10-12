@@ -16,7 +16,7 @@ import { silentLogger, type Logger } from './logger.js';
 import { builtinPlugin } from './plugins/builtin.js';
 import { setFormatLocale } from './plugins/format.js';
 import { PluginRegistry } from './plugins/registry.js';
-import type { OpenRelayPlugin } from './plugins/types.js';
+import { AdapterError, DeliveryError, httpRequest, type OpenRelayPlugin } from './plugins/types.js';
 import type { EngineSettings, EventInput, IngestResult, ServiceDependency } from './types.js';
 import { hmac, safeEqual } from './util/hash.js';
 import { VERSION } from './version.js';
@@ -113,7 +113,14 @@ export class OpenRelay {
     const relay = new OpenRelay(opts);
     for (const plugin of opts.plugins ?? []) relay.registry.register(plugin);
     if (opts.pluginDir) {
-      await relay.registry.loadDirectory(opts.pluginDir, { logger: relay.logger, publicUrl: relay.publicUrl, version: VERSION });
+      await relay.registry.loadDirectory(opts.pluginDir, {
+        logger: relay.logger,
+        publicUrl: relay.publicUrl,
+        version: VERSION,
+        DeliveryError,
+        AdapterError,
+        httpRequest,
+      });
     }
     return relay;
   }

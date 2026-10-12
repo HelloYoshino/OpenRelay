@@ -1,0 +1,110 @@
+# OpenRelay – deklarative Konfiguration
+#
+# Wird beim Start aus $OPENRELAY_DATA_DIR/openrelay.yaml (oder $OPENRELAY_CONFIG) geladen,
+# per SIGHUP neu eingelesen oder über das Dashboard importiert (Einstellungen → Import/Export).
+# Einträge werden anhand ihrer `id` angelegt bzw. aktualisiert. ${VARIABLE} und ${VARIABLE:-standard}
+# werden aus der Umgebung ersetzt – Geheimnisse gehören in Umgebungsvariablen, nicht in diese Datei.
+
+settings:
+  locale: de
+  correlation:
+    windowMinutes: 15          # wie lange ein offener Vorfall neue Alarme „anzieht“
+    threshold: 0.6             # ab diesem Score wird ein Alarm einem Vorfall zugeordnet
+    groupByLabels: [cluster, env, deployment]
+  notifications:
+    immediateSeverity: high    # ab „high“ sofort, darunter gesammelt (Digest)
+    digestMinutes: 30
+  volumeRules:
+    - name: Fehlerflut
+      matchers: ["severity <= warning"]
+      count: 100
+      windowMinutes: 5
+      raiseTo: critical
+  eventRules:
+    - name: Debug-Rauschen verwerfen
+      matchers: ["severity = debug", "source = delta-ai"]
+      drop: true
+    - name: Hauptzweig ist wichtig
+      matchers: ["source = github", "labels.branch in [main, master]"]
+      set: { severity: critical }
+
+channels:
+  - id: discord-ops
+    name: "Discord #ops"
+    type: discord
+    config:
+      webhookUrl: ${DISCORD_WEBHOOK_URL}
+      mentionCritical: "@here"
+
+  - id: telegram-oncall
+    name: Telegram Bereitschaft
+    type: telegram
+    config:
+      botToken: ${TELEGRAM_BOT_TOKEN}
+      chatId: ${TELEGRAM_CHAT_ID}
+
+  - id: ntfy-phone
+    name: ntfy (Handy & Desktop)
+    type: ntfy
+    config:
+      server: https://ntfy.sh
+      topic: ${NTFY_TOPIC:-openrelay-bitte-aendern}
+
+  - id: mail-team
+    name: E-Mail Team
+    type: email
+    enabled: false
+    config:
+      host: ${SMTP_HOST:-smtp.example.com}
+      port: 587
+      user: ${SMTP_USER:-}
+      password: ${SMTP_PASSWORD:-}
+      from: "OpenRelay <relay@example.com>"
+      to: team@example.com
+
+escalationPolicies:
+  - id: bereitschaft
+    name: Bereitschaft
+    steps:
+      - delayMinutes: 10        # nach 10 min ohne Bestätigung …
+        channels: [telegram-oncall]
+      - delayMinutes: 20        # … und nach weiteren 20 min aufs Handy
+        channels: [ntfy-phone]
+    repeat: 1
+
+routes:
+  # Reihenfolge = Priorität. Alle passenden Regeln greifen, außer `stop: true` beendet die Auswertung.
+  - id: wartungsfenster
+    name: Staging nur sammeln
+    matchers: ["labels.env = staging"]
+    channels: [discord-ops]
+    delivery: digest
+    stop: true
+
+  - id: kritisch
+    name: Kritisch → Discord + Eskalation
+    matchers: ["severity >= high"]
+    channels: [discord-ops]
+    escalationPolicy: bereitschaft
+    quietHours:
+      start: "23:00"
+      end: "07:00"
+      timezone: Europe/Berlin
+      bypassSeverity: critical  # Kritisches weckt trotzdem
+
+  - id: rest
+    name: Alles andere als Zusammenfassung
+    matchers: ["severity < high"]
+    channels: [discord-ops]
+    delivery: digest
+    digestMinutes: 60
+
+# Wer hängt von wem ab? Damit erkennt OpenRelay Ursachen („postgres down“ erklärt „api 500er“)
+# und führt Folgefehler automatisch zu einem Vorfall zusammen.
+topology:
+  - service: delta-ai
+    dependsOn: [api, redis]
+  - service: discord-bot
+    dependsOn: [api]
+  - service: api
+    dependsOn: [postgres, redis]

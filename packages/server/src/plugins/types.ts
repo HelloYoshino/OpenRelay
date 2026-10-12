@@ -87,6 +87,10 @@ export interface PluginApi {
   logger: Logger;
   publicUrl: string;
   version: string;
+  /** Helpers, so plugins in the plugin directory need no `import` of OpenRelay. */
+  DeliveryError: typeof DeliveryError;
+  AdapterError: typeof AdapterError;
+  httpRequest: typeof httpRequest;
 }
 
 export type PluginFactory = (api: PluginApi) => OpenRelayPlugin | Promise<OpenRelayPlugin>;
